@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="appModule">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
+</head>
+<body>
+<div class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <div class="navbar-brand">
+                <a href="#/">我的书店</a>
+            </div>
+        </div>
+        <div >
+            <ul class="nav navbar-nav">
+                <li><a href="#/">首页</a></li>
+                <li><a href="#/book/list">列表页</a></li>
+                <li><a href="#/book/add">增加</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<div ng-view class="container"></div>
+<script src="./node_modules/angular/angular.js"></script>
+<script src="./node_modules/angular-resource/angular-resource.js"></script>
+<script src="./node_modules/angular-route/angular-route.js"></script>
+
+<script>
+    var app = angular.module('appModule',['ngResource','ngRoute']);
+
+
+    app.factory('book',function ($resource) {
+        //$resource提供对http的封装
+        return $resource('/books/:id',null,{
+            update:{
+                method:'PUT'
+            }
+        });
+    });
+
+
+    app.config(function ($routeProvider) {
+        $routeProvider.when('/',{
+            templateUrl:'tmpl/index.html',
+            controller:'indexCtrl'
+        }).when('/book/list',{
+            templateUrl:'tmpl/list.html',
+            controller:'listCtrl'
+        }).when('/book/add',{
+            templateUrl:'tmpl/add.html',
+            controller:'addCtrl'
+        }).when('/book/detail/:id',{
+            templateUrl:'tmpl/detail.html',
+            controller:'detailCtrl'
+        }).otherwise('/');
+
+    });
+
+    app.controller('indexCtrl',function ($scope,book) {
+
+    });
+    app.controller('listCtrl',function ($scope,book) {
+        $scope.books = book.query()
+
+    });
+    app.controller('addCtrl',function ($scope,book,$location) {
+        $scope.add = function () {
+            book.save($scope.book).$promise.then(function () {
+                $location.path('/book/list')
+            })
+        }
+    });
+    app.controller('detailCtrl',function ($scope,$routeParams,book,$location) {
+       var id =  $routeParams.id;
+        $scope.book = book.get({id:id});//查询唯一一本书
+        $scope.remove = function () {
+            book.delete($scope.book).$promise.then(function () {
+                $location.path('/book/list')
+            })
+        };
+        $scope.flag = true;
+        $scope.update = function () {
+            $scope.flag =false;
+
+        };
+        $scope.sure = function () {
+            book.update({id:id},$scope.book).$promise.then(function () {
+                $scope.flag = true;
+            })
+        };
+        $scope.goBack = function () {
+            $location.path('/book/list')
+        }
+    })
+</script>
+</body>
+</html>
